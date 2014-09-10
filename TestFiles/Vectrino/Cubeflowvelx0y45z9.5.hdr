@@ -1,0 +1,141 @@
+[C:\AJay\Manuscripts\Art3-ADVBluffLab\Raw\From Colin 2008\Dec-17-20th\Cube\Cubeflowvelx0y45z9.5.vno]
+---------------------------------------------------------------------
+Number of measurements                5998
+Number of checksum errors             0
+Time of first measurement             19/12/2007 11:20:43
+Time of last measurement              19/12/2007 11:22:43
+
+User setup
+---------------------------------------------------------------------
+Sampling rate                         50 Hz
+Nominal velocity range                1.00 m/s
+Transmit length                       1.8 mm
+Sampling volume                       5.5 mm
+Output sync                           VECTRINO
+Output sync                           MASTER
+Analog output                         DISABLED
+Velocity scaling                      1 mm
+Powerlevel                            HIGH-
+Coordinate system                     XYZ
+Sound speed                           MEASURED
+Salinity                              0.0 ppt
+Number of beams                       4
+Software version                      1.08
+System1                               6
+System2                               50
+System3                               5
+System4                               285
+System5                               512
+System9                               1218
+System10                              65
+System11                              0
+System12                              0
+System13                              0
+System14                              1
+System16                              1
+System17                              5
+System22                              10800
+System28                              1
+System29                              1
+System30                              20
+System31                              15026 15057 15087 15117
+System32                              1071
+System33                              32768
+System34                              16384
+System35                              28672
+System36                              14336
+System37                              7168
+System38                              70
+System39                              160
+System40                              0
+System41                              0
+System42                              27962
+System43                              0
+System44                              6
+System45                              6
+System46                              1364
+System47                              32768
+System48                              16384
+System49                              25746
+System50                              12873
+System51                              6437
+System52                              55
+System53                              140
+System39                              200 200 200 200
+Start command                         1
+CRC download                          Unknown
+
+Hardware configuration
+---------------------------------------------------------------------
+Serial number                         VNO 0103      
+Internal code version                 0
+Revision number                       3
+Revision number                       3
+Firmware version                      1.27
+
+Head configuration
+---------------------------------------------------------------------
+System 1                              1
+System 1                              0
+Head frequency                        10000 kHz
+Serial number                         VCN 7059
+Transformation matrix                 8166 0 -8138 0
+                                      0 8277 0 -8336
+                                      2062 0 2168 0
+                                      0 2229 0 1996
+Number of beams                       4
+System5                               0 0 0 0
+System7                               0 2168 0 0
+                                      2229 0 1996 0
+System8                               0 0 0
+                                      0 0 0
+                                      0 0 0
+System9                               0 0 0
+                                      0 0 0
+                                      0 0 0
+System10                              0 0 0 0
+System11                              0 0 0 0
+System13                              1481 259 7128 10861
+System14                              0 0 0 0
+                                      0 0 0 0
+System15                              0 0 0 0
+                                      0 0 0 0
+                                      0 0 0 0
+                                      0 0 0 0
+System16                              0 0 0 0
+System17                              0
+System18                              0
+System19                              0
+System20                              10000
+
+Velocity header
+---------------------------------------------------------------------
+Distance                              0.1852 m
+Quality                               482 counts
+Lag1 & Lag2 used                      70 160 counts
+Noise amplitude (beam1-4)             14 12 15 19 counts
+Noise correlation (beam1-4)           7 0 3 3 %
+Temperature                           19.13 degrees C
+Soundspeed                            1476.4 m/s
+
+Data file format
+---------------------------------------------------------------------
+[C:\AJay\Manuscripts\Art3-ADVBluffLab\Raw\From Colin 2008\Dec-17-20th\Cube\Cubeflowvelx0y45z9.5.dat]
+ 1   Status
+ 2   Ensemble counter
+ 3   Velocity (Beam1|X)               (m/s)
+ 4   Velocity (Beam2|Y)               (m/s)
+ 5   Velocity (Beam3|Z)               (m/s)
+ 6   Velocity (Beam4|Z2)              (m/s)
+ 7   Amplitude (Beam1)                (counts)
+ 8   Amplitude (Beam2)                (counts)
+ 9   Amplitude (Beam3)                (counts)
+10   Amplitude (Beam4)                (counts)
+11   SNR (Beam1)                      (dB)
+12   SNR (Beam2)                      (dB)
+13   SNR (Beam3)                      (dB)
+14   SNR (Beam4)                      (dB)
+15   Correlation (Beam1)              (%)
+16   Correlation (Beam2)              (%)
+17   Correlation (Beam3)              (%)
+18   Correlation (Beam4)              (%)

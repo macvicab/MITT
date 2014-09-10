@@ -1,0 +1,8 @@
+instrument,date,filename,Orientation,zpos1,xpos1,ypos1,Y,waterDepth,Q,bedElevation,posfunction,bedCond,upstream,seeding,comments
+%s,%s,%s,%d,%f,%f,%f,%f,%f,%f,%f,%s,%s,%s,%s,%s
+VectrinoII,6212013,F1_smoothnoneseeding_farBAD,1,0.14,0.5,0,0.075,0.18,0.002,0,CalcXYZUWFlume,smooth,none,none,use uniform channel S = 0.001; B = 0.75 m; Z = 0.21 m; L = 1 m; m = 0
+VectrinoII,6212013,F1_smoothseeding_far_5mlBAD,1,0.14,0.5,0,0.075,0.18,0.002,0,CalcXYZUWFlume,smooth,none,5ml added,
+VectrinoII,6212013,F1_smoothseeding_far_10mlBAD,1,0.14,0.5,0,0.075,0.18,0.002,0,CalcXYZUWFlume,smooth,none,10ml added,
+VectrinoII,6242013,F1_smoothseeding_far_20mlGOOD,1,0.14,0.5,0,0.075,0.18,0.002,0,CalcXYZUWFlume,smooth,none,20ml added,
+VectrinoII,6242013,F1_smoothseeding_far_30mlGOOD,1,0.14,0.5,0,0.075,0.18,0.002,0,CalcXYZUWFlume,smooth,none,30ml added,
+VectrinoII,6242013,F1_smoothseeding_far_60mlGOOD,1,0.14,0.5,0,0.075,0.18,0.002,0,CalcXYZUWFlume,smooth,none,60ml added,

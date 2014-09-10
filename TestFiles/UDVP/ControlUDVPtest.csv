@@ -1,0 +1,8 @@
+instrument,date,filename,startTimeF,yReading,xReadingft,xReading,zReading,phi,theta,tdist,aheight,xadis,elholder,dhold2pb,SDdiff,Y,fnum,beamF,welev1,welev2,welev3,Q,ffname,comments
+%s,%s,%s,%s,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%s,%s
+UDVP,22032010,69p50p122ds0001GOOD,8:28,0.122,69.5,8.632,0.933,-60,0,0.285,0,-0.006,2.09,0.094,0,0.6,1,26.5,0.146,0.137,0.158,15.4,FlumePositionsRun2,
+UDVP,8042009,64p5p075ds0001GOOD,16:29,0.075,64.5,10.16,0.887,-60,0,0.285,0,-0.006,2.09,0.094,0,0.6,1,26.5,0.14,0.138,0.16,15.4,FlumePositionsRun2,
+UDVP,8042009,64p5p013ds0001GOOD,17:13,0.013,64.5,10.16,0.887,-60,0,0.285,0,-0.006,2.09,0.094,0,0.6,4,26.5,0.14,0.138,0.16,15.4,FlumePositionsRun2,
+UDVP,13042009,66p1p025us0002BAD,16:52,0.3,67.5,9.67,0.879,-60,180,0.285,0,0.006,2.09,0.094,0,0.6,116,26.5,0.145,0.138,0.16,15.4,FlumePositionsRun2,noise due to reflectance at zZ approx 0.3
+UDVP,12042009,74p7p013ds0001BAD,14:45,0.3,67.5,7.05,0.855,-60,180,0.285,0,0.006,2.09,0.094,0,0.6,55,26.5,0.145,0.138,0.16,15.4,FlumePositionsRun2,noise due to reflectance at zZ approx 0.35 for 3rd probe
+UDVP,21042009,57p5p013ds0001BAD,13:31,0.013,57.5,12.29,0.898,-60,0,0.285,0,-0.006,2.09,0.094,0,0.6,127,26.5,0.145,0.138,0.16,15.4,FlumePositionsRun2,noise causing flattening of spectra in various locations

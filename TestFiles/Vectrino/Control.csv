@@ -1,0 +1,5 @@
+instrument,filename,nCells,nArrays,bedElevation,waterDepth,xpos,ypos,zpos,Comment
+%s,%s,%d,%d,%f,%f,%f,%f,%f,%s
+Vectrino,Cubeflowvelx0y30z13,1,1,0,0.2,0,0.3,0.13,
+Vectrino,Cubeflowvelx0y45z9.5,1,1,0,0.2,0,0.45,0.095,
+Vectrino,Cubeflowvelxm90y0z13,1,1,0,0.2,0.9,0,0.13,
