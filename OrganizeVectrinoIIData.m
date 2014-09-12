@@ -88,6 +88,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function Data = GetDataVectrinoII(Config,inname)
+% updated 14/09/12 to fix errors in beam calculations
 
 Raw = load(inname,'Data');
    
@@ -99,16 +100,18 @@ if Config.coordSystem == 1
     Data.Vel.w2 = Raw.Data.Profiles_VelZ2;
 % if saved in Beam, transform into components u v w1 w2
 elseif Config.coordSystem == 2
+    ntimetot = length(Raw.Data.Profiles_TimeStamp); % added 14/09/12
+    nCells=length(Raw.Data.Profiles_Range); % added 14/09/12 
     Beam = zeros(ntimetot,Config.nCells,4);
     Ortho = zeros(ntimetot,4,Config.nCells);
     for ncomp = 1:4
-        eval(['Beam(:,:,ncomp) = Raw.Data.Profiles_Beam',num2str(ncomp),';']);
+        eval(['Beam(:,:,ncomp) = Raw.Data.Profiles_VelBeam',num2str(ncomp),';']);  % edited 14/09/12 
     end
     Beam = permute(Beam,[1 3 2]);
     for nC = 1:nCells
         % switch to beam
         TransMi = reshape(Config.transformationMatrix(nC,:),4,4)';
-        Ortho(:,:,nC) = TransMAT(Beam(:,:,nC),TransMi,1);
+        Ortho(:,:,nC) = ConvXYZ2Beam(Beam(:,:,nC),TransMi,1); % edited 14/09/12 to send to correct subprogram
     end
     Ortho = permute(Ortho,[1 3 2]);
     % save components in 
