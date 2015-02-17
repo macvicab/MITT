@@ -17,10 +17,10 @@ Configi.comp = {'Beam1'};
 fnames = fieldnames(CSVControl);
 nftot = length(fnames);
 for nf = 1:nftot
-    Config.(fnames{nf}) = CSVControl.(fnames{nf});
+    Configi.(fnames{nf}) = CSVControl.(fnames{nf});
 end
 
-if isfield(Config,'Q')
+if isfield(Configi,'Q')
     Configi.Qmeasured = Configi.Q; %measured discharge
 end
 
