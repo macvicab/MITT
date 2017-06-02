@@ -49,7 +49,8 @@ function Config = CalcConfigVectrinoII(CSVControl,inname)
 Raw = load(inname,'Config');
 
 %% get relevant parameters from Config structure
-Config.startTime = datenum(Raw.Config.date(1:end-4));
+datenull = 7;% number of columns to ignore for date value in Config (4 for UW Vectrino II, 7 for Australia)
+Config.startTime = datenum(Raw.Config.date(1:end-datenull)); %  
 Config.coordSystem = Raw.Config.coordSystem;
 Config.syncType = Raw.Config.syncType;
 Config.Hz = Raw.Config.sampleRate;
@@ -74,10 +75,10 @@ Config.MainBoard_hPICversion = Raw.Config.MainBoard_hPICversion;
 Config.MainBoard_hHWrevision = Raw.Config.MainBoard_hHWrevision;
 Config.MainBoard_hRecSize = Raw.Config.MainBoard_hRecSize;
 Config.MainBoard_cFWversion = Raw.Config.MainBoard_cFWversion;
-Config.MainBoard_cFWRepoVersion = Raw.Config.MainBoard_cFWRepoVersion;
+%Config.MainBoard_cFWRepoVersion = Raw.Config.MainBoard_cFWRepoVersion;
 Config.MainBoard_cFWdate = Raw.Config.MainBoard_cFWdate;
 Config.Probe_acSerialNo = Raw.Config.Probe_acSerialNo;
-Config.transformationMatrix = Raw.Config.ProbeCalibration_calibrationMatrix;
+%Config.transformationMatrix = Raw.Config.ProbeCalibration_calibrationMatrix;
 Config.originalfileName = Raw.Config.fileName;
 Config.startCollectionTime_seconds = Raw.Config.startCollectionTime_seconds;
 Config.startCollectionTime_subseconds = Raw.Config.startCollectionTime_subseconds;

@@ -2,6 +2,7 @@ function [Data,Config]=OrganizeUDVPData(GUIControl,CSVControl)
 % gets raw data from UDVP output files and saves in Config, Data.  
 % called from OrganizeInput
 % subfunctions include ConvCSV2Struct, CalcConfigECM
+% modified June 2016 by BM to include velocity range calculations
 
 %% get raw data
 % get data filename
@@ -203,6 +204,10 @@ if Config.UseMultiplexer
 else
     Config.nArrays = 1;
 end
+% additional calculations
+Config.Vrange = Config.speedOfSound^2/(4*Config.Frequency*Config.MaximumDepth); %from UVP-DUO User's Guide
+Config.Vinterval = Config.Vrange/Config.RawDataRange;
+
 
 fclose(fid);
 

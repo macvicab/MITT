@@ -18,15 +18,18 @@ sig = (0:2*pi/144:2*pi);
 
 %% prepare velocity time series for analysis
 % create vel and yes matrices
+velhighpass = zeros(nttot,ncomptot);
+v2 = zeros(nttot,ncomptot);
 vel = zeros(nttot,ncomptot);
+despiked = zeros(nttot,ncomptot);
 yes = vel;
 % % remove long scale trends
-% for ncomp = 1:ncomptot
-%     v2 = filter(ones(1,windowSize)/windowSize,1,raw(:,ncomp));
-%     vel(:,ncomp) = raw(:,ncomp)-v2;
-% end
-% remove mean (and trends) of velocity components
-vel = detrend(raw);
+for ncomp = 1:ncomptot
+    v2(:,ncomp) = filter(ones(1,windowSize)/windowSize,1,raw(:,ncomp));
+    velhighpass(:,ncomp) = raw(:,ncomp)-v2(:,ncomp);
+    vel(:,ncomp) = velhighpass(:,ncomp)-median(velhighpass(:,ncomp));
+end
+
 stdvel = std(vel);
 
 % calculate the reynolds stress terms
@@ -75,8 +78,14 @@ while spike
     spike = sum(spikeyes)>spikelim & counter < counterlim; %set limit for iteration at 5 spikes or 5 loops
     counter = counter+1;
 end
+
 % create despiked series and add the mean back into data
-despiked = veldespike+mean(raw)+v2;
+for ncomp = 1:ncomptot
+    v2 = filter(ones(1,windowSize)/windowSize,1,raw(:,ncomp));
+    velhighpass = raw(:,ncomp)-v2;
+    vel(:,ncomp) = velhighpass-median(velhighpass);
+    despiked(:,ncomp) = veldespike(:,ncomp)+median(velhighpass(:,ncomp))+v2(:,ncomp);
+end
 
 end
 

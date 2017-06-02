@@ -2,8 +2,12 @@ function MITT
 % Opens the launch window 
 % Called from command line
 % Calls OrganizeInput, CleanSeries, ClassifyArrayGUI, ClassifyArrayAuto 
-%
- 
+
+% modifications May 2016 by BM
+% add buttons for SpikeARMA and setARMAopts to allow despiking by this method
+% don't turn off Run button if any of three boxes in Computational Block Control are active
+% more commenting
+
 % create launch GUI figure
 [pltLaunch,axe] = CreatepltLaunch;
 
@@ -26,12 +30,13 @@ set(B.P.Select,'Visible','off');
 set(B.P.run,'Enable','off');
 
 % set callback functions for the different uicontrol buttons
+% set the CSVcontrol file names
 set(B.P.getfile,'Callback',@hgetfileCallback);
-
+% Computational block control callbacks
 set(B.GUIControl.Organize,'Callback',@hOrganizeCallback);
 set(B.GUIControl.Clean,'Callback',@hCleanCallback);
 set(B.GUIControl.Classify,'Callback',@hClassifyCallback);
-
+% Organization block callbacks
 set(B.GUIControl.DefineGeometry,'Callback',@hDefineGeometryCallback);
 set(B.GUIControl.Sampling,'Callback',@hSamplingCallback);
 set(B.GUIControl.getCalcChannelfile,'Callback',@hgetCalcChannelfileCallback);
@@ -40,158 +45,216 @@ set(B.GUIControl.Length,'Callback',@hLengthCallback);
 set(B.GUIControl.Width,'Callback',@hWidthCallback);
 set(B.GUIControl.Depth,'Callback',@hDepthCallback);
 set(B.GUIControl.getCalcXYZfile,'Callback',@hgetCalcXYZfileCallback);
-
+% Clean block callbacks
 set(B.GUIControl.Despike,'Callback',@hDespikeCallback);
+set(B.GUIControl.Preprocess,'Callback',@hPreprocessCallback);
+set(B.GUIControl.SpikeARMA,'Callback',@hSpikeARMACallback);
+set(B.P.ARMAopts,'Callback',@hARMAoptsCallback);
 set(B.GUIControl.FiltrBW,'Callback',@hFiltrBWCallback);
-
+% Run button callback
 set(B.P.run,'Callback',@hrunCallback);
 
 %% Callback functions
 
 %%  File and Message Center
 % to get CSVControl file through a gui window
-    function hgetfileCallback(hObject, eventData, handles)
+    function hgetfileCallback(~, ~, ~)
+        % get the name and path of file
         [CSVControlfilename, CSVControlpathname] = uigetfile({'*.csv';'*.txt'},'Get control text file');
+        % set field values equal to name and path of file
         set(B.GUIControl.CSVControlpathname,'String',CSVControlpathname);
         set(B.GUIControl.CSVControlfilename,'String',CSVControlfilename);
-
+        
+        % set and create output directory (odir) 
         odir = [CSVControlpathname,'MITT'];
-        % check for clean directory
+        % check for existance of odir
         chk1 = dir(odir);
-        % if clean directory does not exist, make it
+        % if odir does not exist
         if isempty(chk1)
+            % make it
             mkdir(odir);
         end
 
+        % save odir to pltLaunch
         setappdata(pltLaunch.id,'odir',odir)
+        % change message
         set(B.P.message,'String','New file selected')
+        % turn on Select button
         set(B.P.Select,'Visible','on');
     end
 
 %% Computation block control
 
 % to turn on/off Organization block
-    function hOrganizeCallback(hObject, eventData, handles)
-        onoff = get(B.GUIControl.Organize,'Value');
-        if onoff
+    function hOrganizeCallback(~, ~, ~)
+        % get values of buttons on computational block
+        yOrg = get(B.GUIControl.Organize,'Value');
+        yClean = get(B.GUIControl.Clean,'Value');
+        yClassify = get(B.GUIControl.Classify,'Value');
+        % if organization block is on
+        if yOrg
+            % make the panel visible
             set(B.P.Organize,'Visible','on');
+            % turn Run button on
             set(B.P.run,'Enable','on');
+            % change message
             set(B.P.message,'String','Select Organization Options')
-
         else
+            % make the panel invisible
             set(B.P.Organize,'Visible','off');
-            set(B.P.run,'Enable','off');
+            % change message
             set(B.P.message,'String','')
+            % if no block is active
+            if ~(yClean||yClassify)
+                % turn Run button off
+                set(B.P.run,'Enable','off');
+            end
         end
-            
     end
 
 % to turn on/off Clean block
-    function hCleanCallback(hObject, eventData, handles)
-        onoff = get(B.GUIControl.Clean,'Value');
-        if onoff
+    function hCleanCallback(~, ~, ~)
+        % get values of buttons on computational block
+        yOrg = get(B.GUIControl.Organize,'Value');
+        yClean = get(B.GUIControl.Clean,'Value');
+        yClassify = get(B.GUIControl.Classify,'Value');
+        if yClean
+            % make the panel visible
             set(B.P.Clean,'Visible','on');
+            % turn Run button on
             set(B.P.run,'Enable','on');
+            % change message
             set(B.P.message,'String','Select Cleaning Options')
         else
+            % make the panel invisible
             set(B.P.Clean,'Visible','off');
-            set(B.P.run,'Enable','off');
+            % change message
             set(B.P.message,'String','')
+            % if no block is active
+            if ~(yOrg||yClassify)
+                % turn Run button off
+                set(B.P.run,'Enable','off');
+            end
         end
     end
 
-
 % to turn on/off Classify block
-    function hClassifyCallback(hObject, eventData, handles)
-        onoff = get(B.GUIControl.Classify,'Value');
-        if onoff
+    function hClassifyCallback(~, ~, ~)
+        % get values of buttons on computational block
+        yOrg = get(B.GUIControl.Organize,'Value');
+        yClean = get(B.GUIControl.Clean,'Value');
+        yClassify = get(B.GUIControl.Classify,'Value');
+        if yClassify
             % load default cell quality parameters
             faQCdefault = DefaultfaQC; % DefaultfaQC is a separate m file that is used only to load default values
             % set default values
             B.faQC = subSetValues(B.faQC,faQCdefault);
-            % activate array and the 'run' button
+            % make the panel visible
             set(B.P.Classify,'Visible','on');
+            % turn Run button on
             set(B.P.run,'Enable','on');
+            % change message
             set(B.P.message,'String','Select Classification Options')
         else
+            % make the panel invisible
             set(B.P.Classify,'Visible','off');
-            set(B.P.run,'Enable','off');
-            set(B.P.message,'String','')
+            % change message
+            set(B.P.message,'String','');
+            % if no block is active
+            if ~(yClean||yOrg)
+                set(B.P.run,'Enable','off'); % turn Run button off
+
+            end
         end
     end
 
 %% Organization Control Panel
 % to control whether geometry is defined as part of organization or not
-    function hDefineGeometryCallback(hObject, eventData, handles)
+    function hDefineGeometryCallback(~, ~, ~)
+        % get checkmark value
         DG = get(B.GUIControl.DefineGeometry,'Value');
-        % enable uniform/nonuniform channel popup
+        % if it is checked
         if DG == 1
+            % enable uniform/nonuniform channel panel
             set(B.GUIControl.IsUniform,'Visible','on');
-            set(B.P.run,'Enable','off');
-        % else disable 
+                        set(B.P.run,'Enable','off');% turn Run button off
+        % if it is unchecked 
         else
+            % turn off panels
             set(B.GUIControl.IsUniform,'Visible','off');
             set(B.P.Uniform,'Visible','off');
             set(B.P.NonUniform,'Visible','off');
-            set(B.P.run,'Enable','on');
+            set(B.P.run,'Enable','on');% turn Run button on
         end            
     end
 
 % to control how sampling locations are entered
-    function hSamplingCallback(hObject, eventData, handles)
+    function hSamplingCallback(~, ~, ~)
         Sampling = get(B.GUIControl.Sampling,'Value');
         % if custom subprogram is to be used
         if Sampling == 1
+            % enable window for this purpose
             set(B.P.SamplingLocations,'Visible','on');
-            set(B.P.run,'Enable','off');
+            set(B.P.run,'Enable','off');% turn Run button off
         % elseif a subprogram is called to calculate xpos, ypos and zpos 
         else
+            % disable window
             set(B.P.SamplingLocations,'Visible','off');
-            set(B.P.run,'Enable','on');
+            set(B.P.run,'Enable','on');% turn Run button on
 
         end            
     end
 
 % to identify whether a uniform or non-uniform channel was used
-    function hIsUniformCallback(hObject, eventData, handles)
+    function hIsUniformCallback(~, ~, ~)
+        % get checkmark value
         IsUni = get(B.GUIControl.IsUniform,'Value');
+        % if checked (i.e. uniform channel)
         if IsUni == 1
+            % turn off nonuniform panel
             set(B.P.NonUniform,'Visible','off');
+            % turn on uniform panel
             set(B.P.Uniform,'Visible','on');
-            set(B.P.run,'Enable','on');
+            set(B.P.run,'Enable','on');% turn Run button on
+        % else if unchecked (i.e. non-uniform)
         else
+            % turn off uniform panel
             set(B.P.Uniform,'Visible','off');
+            % turn on nonuniform panel
             set(B.P.NonUniform,'Visible','on');
-            set(B.P.run,'Enable','off');
+            set(B.P.run,'Enable','off');% turn Run button off
         end            
     end
 
 % to get a *.csv file of scattered channel geometry or an *.m file that
 % calculates the geometry
-    function hgetCalcChannelfileCallback(hObject, eventData, handles)
+    function hgetCalcChannelfileCallback(~, ~, ~)
+        % get value of listbox
         Channel = get(B.GUIControl.Channel,'Value');
         if Channel == 1 % csv file
+            % get channel and path name
             [channelname, channelpathname] = uigetfile({'*.csv';'*.txt'},'Get channel geometry *.csv file');
         elseif Channel == 2 %m file
+            % get channel and path name
             [channelname, channelpathname] = uigetfile('*.m','Get channel geometry subprogram');
         end
+        % set channel and path name values to edit fields
         set(B.GUIControl.CalcChannelpathname,'String',channelpathname);
         set(B.GUIControl.CalcChannelfile,'String',channelname);
-
     end
-
 % to get an *.m program that calculates the sampling locations
-    function hgetCalcXYZfileCallback(hObject, eventData, handles)
+    function hgetCalcXYZfileCallback(~, ~, ~)
+        % get the name and path of file
         [xyzname, xyzpathname] = uigetfile({'*.m'},'Get sampling locations subprogram');
+        % set field values equal to the name and path
         set(B.GUIControl.CalcXYZpathname,'String',xyzpathname);
         set(B.GUIControl.CalcXYZfile,'String',xyzname);
-
+        % turn on Run button
         set(B.P.run,'Enable','on');
     end
-
 % set of fields that gets data about channel geometry
 % to get the length of the test section
-    function hLengthCallback(hObject, eventData, handles)
+    function hLengthCallback(~, ~, ~)
         % get length (in m)
         L = str2num(get(B.GUIControl.Length,'String'));
         % calculate and set default grid spacing (in m)
@@ -199,7 +262,7 @@ set(B.P.run,'Callback',@hrunCallback);
         set(B.GUIControl.Lengthgrid,'String',num2str(l));
     end
 % to get the width of the test section
-    function hWidthCallback(hObject, eventData, handles)
+    function hWidthCallback(~, ~, ~)
         % get width (in m)
         BB = str2num(get(B.GUIControl.Width,'String'));
         % calculate and set default grid spacing (in m)
@@ -207,7 +270,7 @@ set(B.P.run,'Callback',@hrunCallback);
         set(B.GUIControl.Widthgrid,'String',num2str(b));
     end
 % to get the depth of the test section
-    function hDepthCallback(hObject, eventData, handles)
+    function hDepthCallback(~, ~, ~)
         % get depth (in m)
         H = str2num(get(B.GUIControl.Depth,'String'));
         % calculate and set default grid spacing (in m)
@@ -217,47 +280,108 @@ set(B.P.run,'Callback',@hrunCallback);
 
 %% Clean block Control Panel
 % to ask if despiking will be done
-    function hDespikeCallback(hObject, eventData, handles)
+    function hDespikeCallback(~, ~, ~)
+        % get checkmark value
         DG = get(B.GUIControl.Despike,'Value');
-        % enable uniform/nonuniform channel popup
+        % if checked
         if DG == 1
+            %enable spike options popup
             set(B.P.SpikeOptions,'Visible','on');
-        % else disable 
+        % if unchecked 
         else
+            % disable spike options popup
             set(B.P.SpikeOptions,'Visible','off');
         end            
     end
-% to ask if filtering will be done
-    function hFiltrBWCallback(hObject, eventData, handles)
-        DG = get(B.GUIControl.FiltrBW,'Value');
-        % enable uniform/nonuniform channel popup
-        if DG == 1
-            set(B.P.FilterOptions,'Visible','on');
-        % else disable 
+% to control how preprocessing
+    function hPreprocessCallback(~, ~, ~)
+        Preprocess = get(B.GUIControl.Preprocess,'Value');
+        % if custom subprogram is to be used
+        if Preprocess == 3
+            % enable window for this purpose
+            set(B.GUIControl.HighPassTime,'Visible','on');
+            set(B.P.HighPasstext,'Visible','on');
+        % elseif a subprogram is called to calculate xpos, ypos and zpos 
         else
+            % disable window
+            set(B.GUIControl.HighPassTime,'Visible','off');
+            set(B.P.HighPasstext,'Visible','off');
+        end            
+    end
+
+% to ask if SpikeARMA will be run
+    function hSpikeARMACallback(~, ~, ~)
+        % get check mark value
+        DG = get(B.GUIControl.SpikeARMA,'Value');
+        % if checked
+        if DG == 1
+            % enable ARMAopts pushbutton
+            set(B.P.ARMAopts,'Enable','on');
+            % get attached ARMAopts info from the pltLaunch figure 
+            ARMAopts = getappdata(pltLaunch.id,'ARMAopts');
+            % if there is no attached variable called ARMAopts
+            if isempty(ARMAopts)
+                % don't allow the run button to be pushed (would cause an
+                % error to try to run without ARMAopts
+                set(B.P.run,'Enable','off');
+            end
+        % else unchecked
+        else
+            % turn off the setARMAopts button
+            set(B.P.ARMAopts,'Enable','off');
+            % turn on the Run button
+            set(B.P.run,'Enable','on');
+        end            
+    end
+% to run setARMAopts when the ARMAopts button is pushed
+    function hARMAoptsCallback(~, ~, ~)
+        % get the ARMAopts data from the figure (can be empty if
+        % setARMAopts has not been run previously)
+        ARMAopts = getappdata(pltLaunch.id,'ARMAopts');
+        % run the setARMAopts sub function
+        setARMAopts(ARMAopts,pltLaunch);
+        % turn on the Run button
+        set(B.P.run,'Enable','on');
+    end
+% to ask if filtering will be done
+    function hFiltrBWCallback(~, ~, ~)
+        % get check mark value
+        DG = get(B.GUIControl.FiltrBW,'Value');
+        % if checked
+        if DG == 1
+            % enable filter options popup
+            set(B.P.FilterOptions,'Visible','on');
+        % if unchecked
+        else
+            % disable filter options popup
             set(B.P.FilterOptions,'Visible','off');
         end            
     end
 
 %% Run
-    function hrunCallback(hObject, eventData, handles)
-        % user input to find the control file for this data set
-        % note: data files should be in same path
-
-        %get display filter parameters from buttons (B.C)
+% when Run button is pushed
+    function hrunCallback(~, ~, ~)
+        %get GUIControl parameters from buttons (B.GUIControl)
         GUIControl = subGetValues(B.GUIControl,[]);
-        
+        % get output directory
         GUIControl.odir = getappdata(pltLaunch.id,'odir');
+        % set output filename
         GUIControl.outname = [GUIControl.odir,filesep,GUIControl.CSVControlfilename(1:end-4),'_output.mat']; % output file name
-
+        % if SpikeARMA is active
+        if GUIControl.SpikeARMA
+            % get ARMAopts from figure
+            GUIControl.ARMAopts = getappdata(pltLaunch.id,'ARMAopts');
+        end
+        
         % Organize data into Config and Data matrices and save one file for each set of simultaneous data
         if GUIControl.Organize
-            
+            % change message
             set(B.P.message,'String','Organizing data')
+            % pause to allow message change
             pause(1)
+            % send to OrganizeInput subprogram
             OrganizeInput(GUIControl);
-            % save the C array
-
+            % change message
             set(B.P.message,'String','Finished')
         end
         % files stored in MITTdir
@@ -265,22 +389,36 @@ set(B.P.run,'Callback',@hrunCallback);
 
         % Clean data using the analysis activated in the C structure
         if GUIControl.Clean
+            % change message
             set(B.P.message,'String','Cleaning data')
+            % pause to allow message change
             pause(1)
+            % send to CleanSeries subprogram
             CleanSeries(GUIControl)
+            % change message
             set(B.P.message,'String','Finished')
         end
         
         if GUIControl.Classify
             % get field names (including subFieldnames using subprogram)
             GUIControl.faQC = subGetValues(B.faQC,[]);
-
+            % if interactive analysis is selected
             if GUIControl.plotArray
-                ClassifyArrayGUI(GUIControl,[]) 
-            else
-                set(B.P.message,'String','Running automatic quality control analysis')
+                % change message
+                set(B.P.message,'String','Interactive analysis GUI is running')
+                % pause to allow message change
                 pause(1)
+                % send to ClassifyArrayGUI subprogram
+                ClassifyArrayGUI(GUIControl,[]) 
+            % automatic analysis
+            else
+                % change message
+                set(B.P.message,'String','Running automatic quality control analysis')
+                % pause to allow message change
+                pause(1)
+                % send to ClassifyArrayAuto subprogram
                 ClassifyArrayAuto(GUIControl)
+                % change message
                 set(B.P.message,'String','Finished')
             end
         end
@@ -289,7 +427,41 @@ set(B.P.run,'Callback',@hrunCallback);
 end
 
 %%%%%
-function B = makeLaunchButtons(pltLaunch,axe);
+
+function [pltLaunch,axe] = CreatepltLaunch
+% to create the pltLaunch (initial MITT screen) Figure  
+% this subprogram only includes the figures and axes, not the buttons
+
+% set figure properties
+pltLaunch.id = figure;
+
+% size of figure
+pltLaunch.x = 27;
+pltLaunch.y = 17;
+pltLaunch.nxtot = 3; % number of axes in x direction (equivalent to columns in pltLaunch
+pltLaunch.col = ([255 130 0])/255; % color
+
+axe.xi = 1.1; % initial x position
+axe.yi = 0.6; % initial y position
+axe.scale = 8; % multiplier for axes
+axe.x = 1*axe.scale; % size of x axis
+axe.space = .4; % space between axes
+axe.xin = axe.xi+(0:pltLaunch.nxtot-1)*(axe.x+axe.space); % x positions of axes
+axe.yin = axe.yi; % y position of axes
+
+% set figure properties
+set(pltLaunch.id,...
+    'Name','Launch MITT Interactive',...
+    'Units','centimeters',...
+    'InvertHardcopy','off',...
+    'Color',pltLaunch.col,...
+    'Position',[axe.xi axe.yi pltLaunch.x pltLaunch.y],...
+    'PaperPositionMode','auto');
+
+end
+
+%%%%%
+function B = makeLaunchButtons(pltLaunch,axe)
 % to create buttons & fields on input control figure
 
 % set colors for figure
@@ -299,32 +471,46 @@ backcol2 = [190 255 255]/255; % used on axes boxes
 btn.height = 0.7; % standard button height
 btn.width = axe.x/3;
 Fsize = 9;
-%
+% set panel sizes and location
+% order
 pan.order = [1 2 3 4 5 6];
+% column
 pan.col = [1 1 1 1 2 3];
+% number of rows in each panel
 pan.row = [1 3 3 11 19.5 18];
+% space between panels
 pan.space = 0.2;
+% find panel columns
 colmem = unique(pan.col);
+% number of columns
 ncoltot = length(colmem);
+% height
 pan.height = (pan.row+1)*btn.height;
+% empty matrix for y position of panels
 pan.yo = zeros(1,length(pan.order));
 
-numi = 1;
+% for each panel column
 for ncol = 1:ncoltot
+    % find which panels are in active column
     colmemi = find(pan.col == ncol);
+    % find how many are in the column
     nmemtot = length(colmemi);
-    [dum,idx] = sort(pan.order(colmemi),'descend');
+    % if there are more than one
     if nmemtot>1
+        % sort them
+        [~,idx] = sort(pan.order(colmemi),'descend');
+        % create spacing
         space= ones(1,nmemtot-1)*pan.space;
+        % find y positions
         pan.yo(colmemi(idx(2:end))) = cumsum(pan.height(colmemi(idx(1:end-1)))+space);
     end
-    % add height to last column for 'run' button
+    % if this is the last column
     if ncol == ncoltot
+        % add height to last column for 'run' button
         pan.yo(colmemi) = pan.yo(colmemi)+1;
     end
 end
 
-axe.xin = axe.xi+(0:pltLaunch.nxtot-1)*(axe.x+axe.space);
 
 pannum = 1;
 %%%%% Title block
@@ -753,7 +939,7 @@ B.GUIControl.FiltrBW = uicontrol('Style','checkbox',...
             'FontSize',Fsize,...
             'Position',[0 btn.num*btn.height btn.width*2.95 btn.height]);
 
-btn.num = 5;
+btn.num = 2.5;
 %% Spike options panel
 B.P.SpikeOptions = uipanel(pltLaunch.id,'Title','Despike options',...
             'Parent',B.P.Clean,...
@@ -762,10 +948,10 @@ B.P.SpikeOptions = uipanel(pltLaunch.id,'Title','Despike options',...
             'FontAngle','italic',...
             'ForegroundColor','b',...
             'BackgroundColor','w',...
-            'Position',[0 btn.num*btn.height btn.width*3 btn.height*10]);
+            'Position',[0 btn.num*btn.height btn.width*3 btn.height*13]);
         
 % switch to beam velocitites for spike detection rather than orthogonal components
-btn.num = 8;
+btn.num = 11;
 B.GUIControl.switch2beam = uicontrol('Style','checkbox',...
             'Parent',B.P.SpikeOptions,...
             'String','Use beam velocities?',...
@@ -774,7 +960,78 @@ B.GUIControl.switch2beam = uicontrol('Style','checkbox',...
             'FontSize',Fsize,...
             'Position',[0 btn.num*btn.height btn.width*2.95 btn.height]);
 %
+btn.num = btn.num-1.3;
+B.P.Preprocesstext = uicontrol('Style','text',...
+            'Parent',B.P.SpikeOptions,...
+            'String','Pre-processing',...
+            'HorizontalAlignment','left',...
+            'Units','centimeters',...
+            'FontAngle','italic',...
+            'BackgroundColor','w',...
+            'FontSize',Fsize,...
+            'Position',[0 btn.num*btn.height btn.width*2 btn.height]);
+% preprocess popup
+btn.num = btn.num-.7;
+B.GUIControl.pctmodetext = uicontrol('Style','text',...
+            'Parent',B.P.SpikeOptions,...
+            'HorizontalAlignment','left',...
+            'String','Classify Mode threshold',...
+            'BackgroundColor','w',...
+            'Units','centimeters',...
+            'FontSize',Fsize,...
+            'Position',[btn.width*0.1 btn.num*btn.height btn.width*1.5 btn.height]);
+B.GUIControl.pctmode = uicontrol('Style','edit',...
+            'Parent',B.P.SpikeOptions,...
+            'String','20',...
+            'Units','centimeters',...
+            'Visible','on',...
+            'FontSize',Fsize,...
+            'Position',[btn.width*1.5 btn.num*btn.height btn.width*.5 btn.height]);
+B.P.pctmodelabel = uicontrol('Style','text',...
+            'Parent',B.P.SpikeOptions,...
+            'String','(%)',...
+            'HorizontalAlignment','left',...
+            'Units','centimeters',...
+            'FontAngle','italic',...
+            'BackgroundColor','w',...
+            'FontSize',Fsize,...
+            'Position',[btn.width*2.0 btn.num*btn.height btn.width*.45 btn.height]);% preprocess popup
 btn.num = btn.num-1;
+B.GUIControl.Preprocesstext = uicontrol('Style','text',...
+            'Parent',B.P.SpikeOptions,...
+            'String','Trend Removal',...
+            'HorizontalAlignment','left',...
+            'BackgroundColor','w',...
+            'Units','centimeters',...
+            'FontSize',Fsize,...
+            'Position',[btn.width*0.1 btn.num*btn.height btn.width btn.height]);
+B.GUIControl.Preprocess = uicontrol('Style','popup',...
+            'Parent',B.P.SpikeOptions,...
+            'String','Median|Linear|High Pass',...
+            'Value',1,...
+            'Units','centimeters',...
+            'FontSize',Fsize,...
+            'Position',[btn.width btn.num*btn.height btn.width btn.height]);
+B.GUIControl.HighPassTime = uicontrol('Style','edit',...
+            'Parent',B.P.SpikeOptions,...
+            'String','5.0',...
+            'Units','centimeters',...
+            'Visible','off',...
+            'FontSize',Fsize,...
+            'Position',[btn.width*2 btn.num*btn.height btn.width*.5 btn.height]);
+B.P.HighPasstext = uicontrol('Style','text',...
+            'Parent',B.P.SpikeOptions,...
+            'String','windowSize (s)',...
+            'HorizontalAlignment','left',...
+            'Units','centimeters',...
+            'FontAngle','italic',...
+            'BackgroundColor','w',...
+            'Visible','off',...
+            'FontSize',Fsize,...
+            'Position',[btn.width*2.5 btn.num*btn.height btn.width*.45 btn.height]);
+        
+        
+btn.num = btn.num-1.3;
 B.P.SpikeMethod = uicontrol('Style','text',...
             'Parent',B.P.SpikeOptions,...
             'String','Despiking Method(s)',...
@@ -793,7 +1050,7 @@ B.P.SpikeMultiplier = uicontrol('Style','text',...
             'BackgroundColor','w',...
             'FontSize',Fsize,...
             'Position',[btn.width*2 btn.num*btn.height btn.width*.95 btn.height]);
-btn.num = btn.num-1;
+btn.num = btn.num-.7;
 B.GUIControl.SpikeStddev = uicontrol('Style','checkbox',...
             'Parent',B.P.SpikeOptions,...
             'String','Standard deviation',...
@@ -863,6 +1120,22 @@ B.GUIControl.Parsheh = uicontrol('Style','checkbox',...
             'FontSize',Fsize,...
             'Position',[0.5 btn.num*btn.height btn.width*2 btn.height]);
 btn.num = btn.num-1;
+B.GUIControl.SpikeARMA = uicontrol('Style','checkbox',...
+            'Parent',B.P.SpikeOptions,...
+            'String','ARMA (DM 15)',...
+            'Units','centimeters',...
+            'BackgroundColor','w',...
+            'FontSize',Fsize,...
+            'Position',[0 btn.num*btn.height btn.width*2 btn.height]);
+% Goring Nikora threshold
+B.P.ARMAopts = uicontrol('Style','pushbutton',...
+            'Parent',B.P.SpikeOptions,...
+            'String','setARMAopts',...
+            'Units','centimeters',...
+            'FontSize',Fsize,...
+            'Enable','off',...
+            'Position',[btn.width*2 btn.num*btn.height btn.width*.95 btn.height]);
+btn.num = btn.num-1;
 B.P.SpikeReplace = uicontrol('Style','text',...
             'Parent',B.P.SpikeOptions,...
             'String','Replacement Method',...
@@ -871,18 +1144,17 @@ B.P.SpikeReplace = uicontrol('Style','text',...
             'FontAngle','italic',...
             'BackgroundColor','w',...
             'FontSize',Fsize,...
-            'Position',[0 btn.num*btn.height btn.width*2 btn.height]);
-btn.num = btn.num-1;
+            'Position',[0 btn.num*btn.height btn.width*1.5 btn.height]);
 B.GUIControl.ReplacementMethod = uicontrol('Style','popup',...
             'Parent',B.P.SpikeOptions,...
             'String','linear interpolation',...
             'Value',1,...
             'Units','centimeters',...
             'FontSize',Fsize,...
-            'Position',[0 btn.num*btn.height btn.width*2.95 btn.height]);
+            'Position',[btn.width*1.5 btn.num*btn.height btn.width*1.45 btn.height]);
 
-btn.num = 2;
-% Spike options panel
+btn.num = 0;
+%% Filter options panel
 B.P.FilterOptions = uipanel(pltLaunch.id,'Title','Filter options',...
             'Parent',B.P.Clean,...
             'Units','centimeters',...
@@ -968,9 +1240,9 @@ B.P.faQCOptions = uipanel(pltLaunch.id,'Title','Classification parameters',...
             'FontAngle','italic',...
             'ForegroundColor','b',...
             'BackgroundColor','w',...
-            'Position',[0 btn.num*btn.height btn.width*3 btn.height*8]);
+            'Position',[0 btn.num*btn.height btn.width*3 btn.height*10]);
 % make faQC buttons
-btn.num = 6;
+btn.num =8;
 B.faQC = makefaQCbuttons(B.P.faQCOptions,btn,Fsize);
 
 % Use interactive plot
@@ -985,42 +1257,3 @@ B.P.run = uicontrol('Style','pushbutton',...
             'String','Run Analysis');
 end
 
-%%%%%
-
-function [pltLaunch,axe] = CreatepltLaunch
-% to create the Figure used for the interactive qc analysis.  
-% Note, this subprogram only includes the figures and axes, not the buttons
-
-% set figure properties
-pltLaunch.id = figure;
-
-% size of figure
-pltLaunch.x = 27;
-pltLaunch.y = 17;
-pltLaunch.nxtot = 3; % number of axes in x direction
-pltLaunch.col = ([255 130 0])/255;
-
-axe.xi = 2;
-axe.yi = 2;
-axe.xi = 1.1;
-axe.yi = 0.6;
-axe.scale = 8; % multiplier for axes
-axe.x = 1*axe.scale;
-axe.space = .4; % space between axes
-axe.xin = axe.xi+(0:pltLaunch.nxtot-1)*(axe.x+axe.space);
-
-% set figure properties
-set(pltLaunch.id,...
-    'Name','Launch MIFTT Interactive',...
-    'Units','centimeters',...
-    'InvertHardcopy','off',...
-    'Color',pltLaunch.col,...
-    'Position',[axe.xi axe.yi pltLaunch.x pltLaunch.y],...
-    'PaperPositionMode','auto');
-
-% size of axes
-axe.xin = axe.xi+(0:pltLaunch.nxtot-1)*(axe.x+axe.space);
-axe.yin = axe.yi;
-
-
-end

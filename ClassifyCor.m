@@ -35,7 +35,7 @@ if ncomptot == 4
 % if three components then it is the Sontek instrument
 elseif ncomptot == 3
     % then they are all entangled
-    goodCellsi = all(goodCor);
+    goodCellsi = all(goodCor');
 % else this method is not relevant (for example, the ECM)
 else
     goodCellsi = ones(1,nCells);

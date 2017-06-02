@@ -64,6 +64,8 @@ if std(pdat(:,natot))==0
     ymaxpp=1;
     yminpp=0;
 end
+ymaxpp = -2;
+yminpp = -6;
 % calculate intervals
 ypp = 10.^([yminpp:1:ymaxpp]);
 % hardcode option
@@ -92,7 +94,10 @@ figx = axexi+sum(axex)+nxtot*xspace+3*titlespace;
 figy = axeyi+nytot*(axey+yspace)+titlespace;
 % create figure
 plt1 = figure;
-set(plt1,'Units','centimeters','Position',[figxi figyi figx figy],'PaperPositionMode','auto');
+set(plt1,'Units','centimeters',...
+    'Position',[figxi figyi figx figy],...
+    'PaperPositionMode','auto',...
+    'Renderer','Painters'); % updated Mar 21 to add renderer to ensure can be printed as vector
 % calculate positions for individual axes
 axexp = axexi+[0 axex(1)+xspace sum(axex(1:2))+2*xspace]; % x positions
 axeyp = fliplr(axeyi+[0:nytot-1]*(axey+yspace)); %y positions
@@ -164,7 +169,7 @@ for nc = 1:1:nctot
     %% add data to axes
     % velocity time series
     set(plt1,'CurrentAxes',long);
-    for na = 1:natot
+    for na = 1:2%natot
         vline = line(1:nttot,pdat(:,na,nc),...
             'Color',colo{na},...
             'LineWidth',linw(na));
@@ -191,7 +196,7 @@ for nc = 1:1:nctot
         'XGrid','on','YGrid','on');
     % spectra using pwelch
     set(plt1,'CurrentAxes',powr);
-    for na = 1:natot
+    for na = 1:2%natot
         [Px,fx]=pwelch(pdat(:,na,nc),window,noverlap,nfft,Hz);
         pline = line(log10(fx),log10(Px),...
             'Color',colo{na},...

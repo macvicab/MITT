@@ -3,7 +3,7 @@ function StructData = ConvMulti2Struct(MultiData,StructData,comp,fieldname);
 % multidimensional array
 
 ncomptot = length(comp);
-
+    
 for ncomp = 1:ncomptot
     eval(['StructData.',fieldname,'.',comp{ncomp},' = MultiData(:,:,',num2str(ncomp),');']);
 end

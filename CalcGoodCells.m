@@ -60,7 +60,22 @@ if isempty(faQCname)||GUIControl.resetFilter
             compi = char(Config.comp(ncomp));
             [goodCellsii(:,ncomp),QCor] = ClassifyCor(compi,Data.Cor,faQC.Corthreshold);
             Qcnames{Qi} = ['CORBeam',num2str(ncomp)];
-            Qdat(:,Qi) = QCor(ncomp);
+            Qdat(:,Qi) = QCor(:,ncomp);
+            Qi = Qi+1;
+        
+        end
+        goodCellsi = goodCellsi.*goodCellsii;
+
+    end
+
+    % filter by percent mode
+    if faQC.pctmodecheck
+        for ncomp = 1:ncomptot
+            compi = char(Config.comp(ncomp));
+            xdata = Data.(GUIControl.X.var).(compi);
+            [goodCellsii(:,ncomp),Modepct] = ClassifyMode(xdata,faQC.pctmode/100);
+            Qcnames{Qi} = ['Mode',compi,' (%)'];
+            Qdat(:,Qi) = Modepct;
             Qi = Qi+1;
         
         end
@@ -72,7 +87,6 @@ if isempty(faQCname)||GUIControl.resetFilter
         % for each component
         for ncomp = 1:ncomptot
             compi = char(Config.comp(ncomp));
-            %here
             xdata = Data.(GUIControl.X.var).(compi);
             [goodCellsii(:,ncomp),Qxcorr] = Classifyxcorr(xdata,faQC.xcorrthreshold);
             Qcnames{Qi} = ['X corr ',compi,' (%)'];
@@ -105,8 +119,10 @@ if isempty(faQCname)||GUIControl.resetFilter
             % for each component
             for ncomp = 1:ncomptot
                 compi = char(Config.comp(ncomp));
+                SpikeY = diff(Data.Vel.(compi)-Data.Despiked.(compi))>0.001;
+
                 SpikeYi = Data.SpikeY.(compi);
-                [goodCellsii(:,ncomp),QSpike] = ClassifySpike(SpikeYi,faQC.SpikeThreshold);
+                [goodCellsii(:,ncomp),QSpike] = ClassifySpike(SpikeY,faQC.SpikeThreshold);
                 Qcnames{Qi} = ['Spikes ',compi,'(%)'];
                 Qdat(:,Qi) = QSpike;
                 Qi = Qi+1;
@@ -153,6 +169,15 @@ if isempty(faQCname)||GUIControl.resetFilter
         end
         goodCellsi = goodCellsi.*goodCellsii;
     end
+    % classify with ARMA model results 
+% % moved it to after cleaned models
+% if user_corrupt
+%     goodCellsii = ARMA_corrupt(velnomean_seg,goodCellsi,ARMA,ARMAopts,start_end);
+%     goodCellsii=goodCellsi.*goodCellsii;
+% else
+%     goodCellsii = goodCellsi;
+% end
+
     for ncomp=1:ncomptot
         compi = char(Config.comp(ncomp));
         eval(['Config.goodCells.',compi,' = goodCellsi(:,ncomp)'';']);% ' added Sept 10 so that goodCells is a 1xnCells matrix, with each value in a column (why?  so annoying!)

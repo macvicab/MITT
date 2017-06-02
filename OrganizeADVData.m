@@ -3,6 +3,9 @@ function [Data,Config] = OrganizeADVData(GUIControl,CSVControl)
 % called from AOrganize
 % subfunctions include CalcConfigADV, GetDataADV
 
+% note that WINADV must be used to preprocess the data to create a *.Vu
+% format file.  MITT will not work with the binary ADV file
+
 %% get Config and Data
 % get filename
 inname = [GUIControl.CSVControlpathname,CSVControl.filename,'.Vu'];
@@ -19,12 +22,19 @@ end
 % if a posfunction was given in the control file
 if GUIControl.Sampling
     % get position data using CalcXYZfile
-    eval(['Config = ',GUIControl.CalcXYZfile(1:end-2),'(GUIControl,CSVControl);']);
+    eval(['Configa = ',GUIControl.CalcXYZfile(1:end-2),'(GUIControl,CSVControl);']);
+    % add fields to Config
+    fanames = fieldnames(Configa);
+    nfatot = length(fanames);
+    for nfa = 1:nfatot
+        Config.(fanames{nfa}) = Configa.(fanames{nfa});
+    end
+
 end 
 Config.transformationMatrix = str2num(CSVControl.transMatrix);
 
 % calculate derived position data
-Config.zZ = Config.zpos/Config.waterDepth;
+Config.zZ = Config.zpos./Config.waterDepth;
 Config.waterElevation = Config.bedElevation+Config.waterDepth; %
 Config.zposGlobal = Config.bedElevation+Config.zpos;
 
@@ -49,26 +59,48 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [Data,temperature] = GetDataADV(inname,Config)
+% updated January 2017 by BM to allow for simultaneous ADV measurements
 % extracts data from inname
 RawAll = importdata(inname,';');
 Raw = RawAll.data; 
+[nttot,nctot] = size(Raw);
 % column names
-deets = {'Vel','Cor','SNR','Amp'};
+deetsin = {'V','COR','SNR','AMP'}; % headers in Vu file
+deetsout = {'Vel','Cor','SNR','Amp'}; % structure file names
+compin = {'x','y','z'}; % component names used for velocity V in Vu file
 % column numbers
-deetsVar=[3,6,9,12];
-ndtot = length(deets);
-% for each component
-for ncomp = 1:length(Config.comp)
-    % get the first component of data from the Raw matrix
-    eval(['Data.',deets{1},'.',Config.comp{ncomp},' = Raw(:,deetsVar(1)+ncomp)/100;']);
-    % for other components
-    for nd=2:ndtot
-        % get the data from Raw
-        eval(['Data.',deets{nd},'.Beam',num2str(ncomp),' = Raw(:,deetsVar(nd)+ncomp);']);
+%deetsVar=[3,6,9,12]; can't use this for multiple columns
+% find all desired outputs
+ndtot = length(deetsout);
+% for each output
+for nd=1:ndtot
+    % if nd == 1 - velocity component
+    if nd == 1
+        % for each component
+        for ncomp = 1:length(Config.comp)
+            % find columns with the appropriate header
+            headi = [deetsin{nd},compin{ncomp}];
+            a = strfind(RawAll.colheaders,headi);
+            b = find(~cellfun(@isempty,a));
+            dat = Raw(:,b)/100; % convert to m/s
+            eval(['Data.',deetsout{nd},'.',Config.comp{ncomp},'= dat;']);
+        end
+        
+    % other components use numbering system
+    else
+        for ncomp = 1:length(Config.comp)
+            % find columns with the appropriate header
+            headi = [deetsin{nd},num2str(ncomp-1)];
+            a = strfind(RawAll.colheaders,headi);
+            b = find(~cellfun(@isempty,a));
+            dat = Raw(:,b);
+            eval(['Data.',deetsout{nd},'.Beam',num2str(ncomp),' = dat;']);
+            
+        end
     end
 end
 % save timeStamp and temperature
 Data.timeStamp = Raw(:,1);
-temperature = Raw(1,20);
+temperature = [];%Raw(1,20); % not all instruments measure temperature, should change to an if
 
 end

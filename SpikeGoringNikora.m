@@ -1,17 +1,18 @@
-function despiked = SpikeGoringNikora(raw,Hz,UniMult,ReplacementMethod,Parsheh)
+function veldespike = SpikeGoringNikora(velnomedian,UniMult,ReplacementMethod,Parsheh)
 %GORING AND NIKORA PHASE SPACE FILTER
 % from Goring, D.G. and Nikora, V.I. 2002. Despiking Acoustic Doppler
 % Velocimeter data. Journal of Hydraulic Engineering, 128: 117-126.
 % called from CleanSpike
 % calls SpikeReplace
 % subfunction inellipse
+% modified June 2016 by BM to move preprocessing to CleanSpike
 
 %% control parameters
-windowSize = Hz*5; % filtersize window for removal of long term trends
+%windowSize = Hz*5; % filtersize window for removal of long term trends
 counterlim = 4; % sets the maximum number of spike detection loops
 
 %% initial parameters
-nttot = length(raw);
+nttot = length(velnomedian);
 spikelim = max([5 floor(nttot*0.001)]); % sets the minimum number of detected spikes to initiate loop post replacement
 UniThresh = UniMult*(2*log(nttot))^0.5;          %CALCULATES UNIVERSAL THRESHOLD
 sig = (0:2*pi/144:2*pi);
@@ -20,16 +21,16 @@ sig = (0:2*pi/144:2*pi);
 % create vel and yes matrices
 vel = zeros(nttot,3);
 yes = vel;
-% remove long scale trends
-velnomean = raw-mean(raw);
-v2 = filter(ones(1,round(windowSize))/round(windowSize),1,velnomean);
-velhighpass = raw-v2;
-
-% modified as per Wahl, T. L. (2003), Discussion of ‘‘Despiking Acoustic Doppler Velocimeter Data’’ by Derek G. Goring and Vladimir I. Nikora, Journal of Hydraulic Engineering, 129(6), 484-487.
-% and supported by Goring, D. G., and V. I. Nikora (2003), Closure to ‘‘Depiking Acoustic Doppler Velocimeter Data’’ by Derek G. Goring and Vladimir I. Nikora, Journal of Hydraulic Engineering, 129(6), 487-488.
-% use median as location estimator rather than mean
-velnomedian = velhighpass-median(velhighpass);
-
+% % remove long scale trends
+% velnomean = raw-mean(raw);
+% v2 = filter(ones(1,round(windowSize))/round(windowSize),1,velnomean);
+% velhighpass = raw-v2;
+% 
+% % modified as per Wahl, T. L. (2003), Discussion of ‘‘Despiking Acoustic Doppler Velocimeter Data’’ by Derek G. Goring and Vladimir I. Nikora, Journal of Hydraulic Engineering, 129(6), 484-487.
+% % and supported by Goring, D. G., and V. I. Nikora (2003), Closure to ‘‘Depiking Acoustic Doppler Velocimeter Data’’ by Derek G. Goring and Vladimir I. Nikora, Journal of Hydraulic Engineering, 129(6), 487-488.
+% % use median as location estimator rather than mean
+% velnomedian = velhighpass-median(velhighpass);
+% 
 vel(:,1) = velnomedian;
 
 %% loop to remove spikes
@@ -96,8 +97,8 @@ while spike
     spike = sum(spikeyes)>spikelim & counter < counterlim; %set limit for iteration at 5 spikes or 5 loops
     counter = counter+1;
 end
-% create despiked series and add the median back into data
-despiked = veldespike+median(raw)+v2;
+% % create despiked series and add the median back into data
+% despiked = veldespike+median(velhighpass)+v2;
 
 end
 
@@ -109,33 +110,35 @@ yes = zeros(size(xDat))==0;
 %% prepare ellipse
 % convert cartesian ellipse coordinates into polar coordinates
 [angEllipse,rEllipse]=cart2pol(xEllipse,yEllipse);
-% delet end value
-angEllipse(end) = [];
-rEllipse(end) = [];
-%sort Ellipse data
-[~,sortIDX] = sort(angEllipse);
-angEllipse = angEllipse(sortIDX);
-rEllipse = rEllipse(sortIDX);
-% close the loop
-angEllipse = [angEllipse(end)-2*pi angEllipse ];
-rEllipse = [rEllipse(end) rEllipse ];
-ravgEllipse = rEllipse(1:end-1)+diff(rEllipse)/2;
+if any(angEllipse>0)
+    % delete end value
+    angEllipse(end) = [];
+    rEllipse(end) = [];
+    %sort Ellipse data
+    [~,sortIDX] = sort(angEllipse);
+    angEllipse = angEllipse(sortIDX);
+    rEllipse = rEllipse(sortIDX);
+    % close the loop
+    angEllipse = [angEllipse(end)-2*pi angEllipse ];
+    rEllipse = [rEllipse(end) rEllipse ];
+    ravgEllipse = rEllipse(1:end-1)+diff(rEllipse)/2;
 
-%% determine in or out status of points
-% convert x and y dat to polar coordinates
-[angDat,rDat]=cart2pol(xDat,yDat);
-% sort points with a histogram
-[n,angIDX] = histc(angDat,angEllipse);
-% get last bin and set to next to last
-nogoo = find(angIDX == length(angEllipse) | angIDX == 0);
-angIDX(nogoo) = 1;
-% determine all angles
-angmem = unique(angIDX);
-% for each angle, determine whether points are greater or less than the
-% radius
-natot = length(angmem);
-for na=1:natot
-    goo = angIDX == angmem(na);
-    yes(goo) = rDat(goo)<=ravgEllipse(angmem(na));
+    %% determine in or out status of points
+    % convert x and y dat to polar coordinates
+    [angDat,rDat]=cart2pol(xDat,yDat);
+    % sort points with a histogram
+    [n,angIDX] = histc(angDat,angEllipse);
+    % get last bin and set to next to last
+    nogoo = find(angIDX == length(angEllipse) | angIDX == 0);
+    angIDX(nogoo) = 1;
+    % determine all angles
+    angmem = unique(angIDX);
+    % for each angle, determine whether points are greater or less than the
+    % radius
+    natot = length(angmem);
+    for na=1:natot
+        goo = angIDX == angmem(na);
+        yes(goo) = rDat(goo)<=ravgEllipse(angmem(na));
+    end
 end
 end
